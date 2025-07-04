@@ -1,0 +1,116 @@
+package com.perfulandia.usuarioservice;
+
+import com.perfulandia.usuarioservice.model.Usuario;
+import com.perfulandia.usuarioservice.repository.UsuarioRepository;
+import com.perfulandia.usuarioservice.service.UsuarioService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class UsuarioServiceTest {
+
+    @Mock
+    private UsuarioRepository usuarioRepositoryMock;
+
+    @InjectMocks
+    private UsuarioService usuarioService;
+
+    private Usuario usuario1;
+    private Usuario usuario2;
+
+    @BeforeEach
+    void setUp() {
+        usuario1 = new Usuario();
+        usuario1.setId(1L);
+        usuario1.setNombre("Usuario Uno");
+        usuario1.setEmail("uno@example.com");
+
+        usuario2 = new Usuario();
+        usuario2.setId(2L);
+        usuario2.setNombre("Usuario Dos");
+        usuario2.setEmail("dos@example.com");
+    }
+
+    @Test
+    void testListar_debeDevolverListaUsuarios() {
+        // Arrange
+        List<Usuario> listaEsperada = Arrays.asList(usuario1, usuario2);
+        when(usuarioRepositoryMock.findAll()).thenReturn(listaEsperada);
+
+        // Act
+        List<Usuario> listaActual = usuarioService.listar();
+
+        // Assert
+        assertNotNull(listaActual);
+        assertEquals(2, listaActual.size());
+        assertEquals(listaEsperada, listaActual);
+        verify(usuarioRepositoryMock, times(1)).findAll();
+    }
+
+    @Test
+    void testGuardar_debeDevolverUsuarioGuardado() {
+        // Arrange
+        when(usuarioRepositoryMock.save(any(Usuario.class))).thenReturn(usuario1);
+
+        // Act
+        Usuario usuarioGuardado = usuarioService.guardar(usuario1);
+
+        // Assert
+        assertNotNull(usuarioGuardado);
+        assertEquals(usuario1.getId(), usuarioGuardado.getId());
+        verify(usuarioRepositoryMock, times(1)).save(usuario1);
+    }
+
+    @Test
+    void testBuscar_cuandoExiste_debeDevolverUsuario() {
+        // Arrange
+        long idExistente = 1L;
+        when(usuarioRepositoryMock.findById(idExistente)).thenReturn(Optional.of(usuario1));
+
+        // Act
+        Usuario usuarioEncontrado = usuarioService.buscar(idExistente);
+
+        // Assert
+        assertNotNull(usuarioEncontrado);
+        assertEquals(usuario1.getId(), usuarioEncontrado.getId());
+        verify(usuarioRepositoryMock, times(1)).findById(idExistente);
+    }
+
+    @Test
+    void testBuscar_cuandoNoExiste_debeDevolverNull() {
+        // Arrange
+        long idNoExistente = 99L;
+        when(usuarioRepositoryMock.findById(idNoExistente)).thenReturn(Optional.empty());
+
+        // Act
+        Usuario usuarioEncontrado = usuarioService.buscar(idNoExistente);
+
+        // Assert
+        assertNull(usuarioEncontrado);
+        verify(usuarioRepositoryMock, times(1)).findById(idNoExistente);
+    }
+
+    @Test
+    void testEliminar_debeLlamarDeleteByIdDelRepo() {
+        // Arrange
+        long idAEliminar = 1L;
+        // doNothing().when(usuarioRepositoryMock).deleteById(idAEliminar);
+
+        // Act
+        usuarioService.eliminar(idAEliminar);
+
+        // Assert
+        verify(usuarioRepositoryMock, times(1)).deleteById(idAEliminar);
+    }
+}
