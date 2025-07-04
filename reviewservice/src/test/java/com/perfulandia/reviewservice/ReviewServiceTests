@@ -1,0 +1,120 @@
+package com.perfulandia.productservice;
+
+import com.perfulandia.productservice.model.Producto;
+import com.perfulandia.productservice.repository.ProductoRepository;
+import com.perfulandia.productservice.service.ProductoService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class ProductoServiceTest {
+
+    @Mock
+    private ProductoRepository productoRepositoryMock;
+
+    @InjectMocks
+    private ProductoService productoService;
+
+    private Producto producto1;
+    private Producto producto2;
+
+    @BeforeEach
+    void setUp() {
+        producto1 = new Producto();
+        producto1.setId(1L);
+        producto1.setNombre("Perfume A");
+        producto1.setPrecio(100.0);
+
+        producto2 = new Producto();
+        producto2.setId(2L);
+        producto2.setNombre("Perfume B");
+        producto2.setPrecio(150.0);
+    }
+
+    @Test
+    void testListar_debeDevolverListaProductos() {
+        // Arrange
+        List<Producto> listaEsperada = Arrays.asList(producto1, producto2);
+        when(productoRepositoryMock.findAll()).thenReturn(listaEsperada);
+
+        // Act
+        List<Producto> listaActual = productoService.listar();
+
+        // Assert
+        assertNotNull(listaActual);
+        assertEquals(2, listaActual.size());
+        assertEquals(listaEsperada, listaActual);
+        verify(productoRepositoryMock, times(1)).findAll();
+    }
+
+    @Test
+    void testGuardar_debeDevolverProductoGuardado() {
+        // Arrange
+        when(productoRepositoryMock.save(any(Producto.class))).thenReturn(producto1);
+
+        // Act
+        Producto productoGuardado = productoService.guardar(producto1);
+
+        // Assert
+        assertNotNull(productoGuardado);
+        assertEquals(producto1.getId(), productoGuardado.getId());
+        assertEquals(producto1.getNombre(), productoGuardado.getNombre());
+        verify(productoRepositoryMock, times(1)).save(producto1);
+    }
+
+    @Test
+    void testBuscarPorId_cuandoExiste_debeDevolverProducto() {
+        // Arrange
+        long idExistente = 1L;
+        when(productoRepositoryMock.findById(idExistente)).thenReturn(Optional.of(producto1));
+
+        // Act
+        Producto productoEncontrado = productoService.bucarPorId(idExistente);
+
+        // Assert
+        assertNotNull(productoEncontrado);
+        assertEquals(producto1.getId(), productoEncontrado.getId());
+        verify(productoRepositoryMock, times(1)).findById(idExistente);
+    }
+
+    @Test
+    void testBuscarPorId_cuandoNoExiste_debeDevolverNull() {
+        // Arrange
+        long idNoExistente = 99L;
+        when(productoRepositoryMock.findById(idNoExistente)).thenReturn(Optional.empty());
+
+        // Act
+        Producto productoEncontrado = productoService.bucarPorId(idNoExistente);
+
+        // Assert
+        assertNull(productoEncontrado);
+        verify(productoRepositoryMock, times(1)).findById(idNoExistente);
+    }
+
+    @Test
+    void testEliminar_debeLlamarDeleteByIdDelRepo() {
+        // Arrange
+        long idAEliminar = 1L;
+        // No necesitamos when() para métodos void, Mockito se encarga.
+        // Si quisiéramos verificar que no lanza excepción:
+        // doNothing().when(productoRepositoryMock).deleteById(idAEliminar);
+
+        // Act
+        productoService.eliminar(idAEliminar);
+
+        // Assert
+        // Verificar que el método deleteById fue llamado en el mock con el ID correcto
+        verify(productoRepositoryMock, times(1)).deleteById(idAEliminar);
+    }
+}
