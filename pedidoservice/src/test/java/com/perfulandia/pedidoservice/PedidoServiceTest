@@ -1,0 +1,114 @@
+package com.perfulandia.pedidoservice;
+
+import com.perfulandia.pedidoservice.model.Pedido;
+import com.perfulandia.pedidoservice.repository.PedidoRepository;
+import com.perfulandia.pedidoservice.service.PedidoService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class PedidoServiceTest {
+
+    @Mock
+    private PedidoRepository pedidoRepositoryMock;
+
+    @InjectMocks
+    private PedidoService pedidoService;
+
+    private Pedido pedido1;
+    private Pedido pedido2;
+
+    @BeforeEach
+    void setUp() {
+        pedido1 = new Pedido();
+        pedido1.setId(1L);
+        pedido1.setTotal(250.75); // Ejemplo, ajustar según modelo real
+
+        pedido2 = new Pedido();
+        pedido2.setId(2L);
+        pedido2.setTotal(300.50);
+    }
+
+    @Test
+    void testListar_debeDevolverListaPedidos() {
+        // Arrange
+        List<Pedido> listaEsperada = Arrays.asList(pedido1, pedido2);
+        when(pedidoRepositoryMock.findAll()).thenReturn(listaEsperada);
+
+        // Act
+        List<Pedido> listaActual = pedidoService.listar();
+
+        // Assert
+        assertNotNull(listaActual);
+        assertEquals(2, listaActual.size());
+        assertEquals(listaEsperada, listaActual);
+        verify(pedidoRepositoryMock, times(1)).findAll();
+    }
+
+    @Test
+    void testGuardar_debeDevolverPedidoGuardado() {
+        // Arrange
+        when(pedidoRepositoryMock.save(any(Pedido.class))).thenReturn(pedido1);
+
+        // Act
+        Pedido pedidoGuardado = pedidoService.guardar(pedido1);
+
+        // Assert
+        assertNotNull(pedidoGuardado);
+        assertEquals(pedido1.getId(), pedidoGuardado.getId());
+        verify(pedidoRepositoryMock, times(1)).save(pedido1);
+    }
+
+    @Test
+    void testBuscarPorId_cuandoExiste_debeDevolverPedido() {
+        // Arrange
+        long idExistente = 1L;
+        when(pedidoRepositoryMock.findById(idExistente)).thenReturn(Optional.of(pedido1));
+
+        // Act
+        Pedido pedidoEncontrado = pedidoService.buscarPorId(idExistente);
+
+        // Assert
+        assertNotNull(pedidoEncontrado);
+        assertEquals(pedido1.getId(), pedidoEncontrado.getId());
+        verify(pedidoRepositoryMock, times(1)).findById(idExistente);
+    }
+
+    @Test
+    void testBuscarPorId_cuandoNoExiste_debeDevolverNull() {
+        // Arrange
+        long idNoExistente = 99L;
+        when(pedidoRepositoryMock.findById(idNoExistente)).thenReturn(Optional.empty());
+
+        // Act
+        Pedido pedidoEncontrado = pedidoService.buscarPorId(idNoExistente);
+
+        // Assert
+        assertNull(pedidoEncontrado);
+        verify(pedidoRepositoryMock, times(1)).findById(idNoExistente);
+    }
+
+    @Test
+    void testEliminar_debeLlamarDeleteByIdDelRepo() {
+        // Arrange
+        long idAEliminar = 1L;
+        // doNothing().when(pedidoRepositoryMock).deleteById(idAEliminar);
+
+        // Act
+        pedidoService.eliminar(idAEliminar);
+
+        // Assert
+        verify(pedidoRepositoryMock, times(1)).deleteById(idAEliminar);
+    }
+}
