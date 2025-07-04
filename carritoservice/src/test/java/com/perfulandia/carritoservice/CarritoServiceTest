@@ -1,0 +1,86 @@
+package com.perfulandia.carritoservice;
+
+import com.perfulandia.carritoservice.model.Carrito;
+import com.perfulandia.carritoservice.repository.CarritoRepository;
+import com.perfulandia.carritoservice.service.CarritoService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class CarritoServiceTests { 
+
+    @Mock
+    private CarritoRepository carritoRepositoryMock;
+
+    @InjectMocks
+    private CarritoService carritoService;
+
+    private Carrito carrito1;
+    private Carrito carrito2;
+
+    @BeforeEach
+    void setUp() {
+        carrito1 = new Carrito();
+        carrito1.setId(1L);
+        carrito1.setUsuarioId(100L); // Ejemplo de propiedad, ajustar según modelo real
+
+        carrito2 = new Carrito();
+        carrito2.setId(2L);
+        carrito2.setUsuarioId(101L); // Ejemplo de propiedad
+    }
+
+    @Test
+    void testListar_debeDevolverListaCarritos() {
+        // Arrange
+        List<Carrito> listaEsperada = Arrays.asList(carrito1, carrito2);
+        when(carritoRepositoryMock.findAll()).thenReturn(listaEsperada);
+
+        // Act
+        List<Carrito> listaActual = carritoService.listar();
+
+        // Assert
+        assertNotNull(listaActual);
+        assertEquals(2, listaActual.size());
+        assertEquals(listaEsperada, listaActual);
+        verify(carritoRepositoryMock, times(1)).findAll();
+    }
+
+    @Test
+    void testGuardar_debeDevolverCarritoGuardado() {
+        // Arrange
+        when(carritoRepositoryMock.save(any(Carrito.class))).thenReturn(carrito1);
+
+        // Act
+        Carrito carritoGuardado = carritoService.guardar(carrito1);
+
+        // Assert
+        assertNotNull(carritoGuardado);
+        assertEquals(carrito1.getId(), carritoGuardado.getId());
+        verify(carritoRepositoryMock, times(1)).save(carrito1);
+    }
+
+    @Test
+    void testBuscar_cuandoExiste_debeDevolverCarrito() {
+        // Arrange
+        long idExistente = 1L;
+        when(carritoRepositoryMock.findById(idExistente)).thenReturn(Optional.of(carrito1));
+
+        // Act
+        Carrito carritoEncontrado = carritoService.buscar(idExistente);
+
+        // Assert
+        assertNotNull(carritoEncontrado);
+        assertEquals(carrito1.getId(), carritoEncontrado.getId());
+        verify(carritoRepositoryMock, times(1)).findById(idExistente);
+    }
